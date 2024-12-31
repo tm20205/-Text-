@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>りぞりぷと設定ファイル作成ツール</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      line-height: 1.6;
+      margin: 20px;
+    }
+    label {
+      font-weight: bold;
+    }
+    input[type="number"] {
+      width: 60px;
+      margin-right: 10px;
+    }
+    button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    textarea {
+      width: 100%;
+      height: 300px;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h1>りぞりぷと設定ファイル作成ツール</h1>
+  <p>字幕の色と縁取りの色を設定して、「設定ファイルを生成」ボタンを押してください。</p>
+
+  <form id="settings-form">
+    <h3>字幕の色 (RGB値)</h3>
+    <label for="text-red">赤 (R):</label>
+    <input type="number" id="text-red" name="text-red" min="0" max="255" value="255">
+    <label for="text-green">緑 (G):</label>
+    <input type="number" id="text-green" name="text-green" min="0" max="255" value="255">
+    <label for="text-blue">青 (B):</label>
+    <input type="number" id="text-blue" name="text-blue" min="0" max="255" value="255">
+
+    <h3>縁取りの色 (RGB値)</h3>
+    <label for="outline-red">赤 (R):</label>
+    <input type="number" id="outline-red" name="outline-red" min="0" max="255" value="0">
+    <label for="outline-green">緑 (G):</label>
+    <input type="number" id="outline-green" name="outline-green" min="0" max="255" value="0">
+    <label for="outline-blue">青 (B):</label>
+    <input type="number" id="outline-blue" name="outline-blue" min="0" max="255" value="0">
+
+    <h3>タイムラインの色 (RGB値)</h3>
+    <label for="timeline-red">赤 (R):</label>
+    <input type="number" id="timeline-red" name="timeline-red" min="0" max="255" value="0">
+    <label for="timeline-green">緑 (G):</label>
+    <input type="number" id="timeline-green" name="timeline-green" min="0" max="255" value="0">
+    <label for="timeline-blue">青 (B):</label>
+    <input type="number" id="timeline-blue" name="timeline-blue" min="0" max="255" value="0">
+    <br>
+
+    <button type="button" onclick="generateFile()">設定ファイルを生成</button>
+  </form>
+
+  <h3>生成された設定ファイル</h3>
+  <textarea id="generated-settings" readonly></textarea>
+  <br>
+  <button onclick="downloadFile()">ダウンロード</button>
+
+  <script>
+    function rgbToDecimal(value) {
+      return (value / 255).toFixed(9); // 小数第9位まで対応
+    }
+
+    function generateFile() {
+      const textRed = rgbToDecimal(document.getElementById('text-red').value);
+      const textGreen = rgbToDecimal(document.getElementById('text-green').value);
+      const textBlue = rgbToDecimal(document.getElementById('text-blue').value);
+
+      const outlineRed = rgbToDecimal(document.getElementById('outline-red').value);
+      const outlineGreen = rgbToDecimal(document.getElementById('outline-green').value);
+      const outlineBlue = rgbToDecimal(document.getElementById('outline-blue').value);
+
+      const timelineRed = rgbToDecimal(document.getElementById('timeline-red').value);
+      const timelineGreen = rgbToDecimal(document.getElementById('timeline-green').value);
+      const timelineBlue = rgbToDecimal(document.getElementById('timeline-blue').value);
+
+      const settingsFile = `
+{
+	Tools = ordered() {
+		Text1 = TextPlus {
+			CtrlWZoom = false,
+			Inputs = {
+				GlobalOut = Input { Value = 149, },
+				Width = Input { Value = 1920, },
+				Height = Input { Value = 1080, },
+				UseFrameFormatSettings = Input { Value = 1, },
+				Depth = Input { Value = 1, },
+				["Gamut.SLogVersion"] = Input { Value = FuID { "SLog2" }, },
+				Center = Input { Value = { 0.5, 0.15 }, },
+				SelectElement = Input { Value = 1, },
+				Select = Input { Value = 1, },
+				Name1 = Input { Value = "ベース", },
+				Name2 = Input { Value = "アウトライン", },
+				Enabled2 = Input { Value = 1, },
+				StyledText = Input { Value = "Subtitle", },
+				Font = Input { Value = "Meiryo", },
+				Style = Input { Value = "Bold", },
+				Size = Input { Value = 0.07, },
+				VerticalJustificationNew = Input { Value = 3, },
+				HorizontalJustificationNew = Input { Value = 3, },
+				Thickness2 = Input { Value = 0.125, },
+        Red1 = Input { Value = ${textRed}, },
+				Green1 = Input { Value = ${textGreen}, },
+				Blue1 = Input { Value = ${textBlue}, },
+				Red2 = Input { Value = ${outlineRed}, },
+				Green2 = Input { Value = ${outlineGreen}, },
+				Blue2 = Input { Value = ${outlineBlue}, },
+			},
+			ViewInfo = OperatorInfo { Pos = { 17215, 247.5 } },
+			Colors = { TileColor = { R = ${timelineRed}, G = ${timelineGreen}, B = ${timelineBlue} }, }
+		}
+	}
+}
+      `;
+
+      document.getElementById('generated-settings').value = settingsFile.trim();
+    }
+
+    function downloadFile() {
+      const text = document.getElementById('generated-settings').value;
+      const blob = new Blob([text], { type: "text/plain" });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = "settings.setting";
+      a.click();
+    }
+  </script>
+</body>
+</html>
